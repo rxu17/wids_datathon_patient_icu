@@ -1,0 +1,118 @@
+---
+title: "exploratory_data_analysis"
+author: "rxu17"
+date: "1/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Data Analysis with WIDS 2020 Stanford ICU Patient Survival Data
+### After main methods/models are decided, then pipeline will be created upon
+### the data
+
+```{r}
+# load in required packages
+pacman::p_load(data.table, assertthat, tidyr, shiny, ggplot2, RMariaDB,
+               shinydashboard, plotly, formattable, ini, shinythemes, RColorBrewer,
+               scales, ggthemes, DBI, RMySQL, memoise)
+
+```
+
+### We look at data structure + data types
+```{r, echo=FALSE}
+input_df <- fread("/Users/rxu17/Downloads/training_v2.csv")
+head(input_df)
+```
+
+```{r, echo=FALSE}
+str(input_df)
+```
+
+### Next we examine more about the data itself like number of NAs
+
+```{r, echo=FALSE}
+# analyze NAs in data
+colsums <- colSums(is.na(input_df)) %>% as.list
+setDT(colsums)
+colsums <- melt(colsums, measure.vars = colnames(colsums), value.name = "na_count")
+head(colsums)
+```
+```{r}
+# Looks like from the above, we have lots of NAs, given we only have 91k observations
+# should remove the variables with a ton of NAs > 40%?
+colsums[, percent_missing := (na_count/nrow(input_df))*100]
+colsums[percent_missing > 40]
+```
+
+
+```{r}
+
+cor_matrix <- input_df[, .SD, .SDcols = which(sapply(input_df, is.numeric))] 
+cor_matrix <- cor_matrix %>% na.omit(cols = cor_matrix %>% colnames)
+cor_matrix <- cor(input_df[, .SD, .SDcols = which(sapply(input_df, is.numeric))], use = "pairwise.complete.obs") %>% as.matrix
+```
+
+```{r}
+library(corrplot)
+for(i in seq(4, 158, by = 20)){
+  corrplot(cor_matrix[i:(i+20), i:(i+20)])
+}
+```
+
+```{r}
+# get correlated and significant correlation
+library(Hmisc)
+install.packages("RcmdrMisc")
+
+cor_matrix_p <- rcorr.adjust(input_df[, .SD, .SDcols = which(sapply(input_df, is.numeric))], use = "pairwise.complete.obs") %>% as.matrix
+```
+
+
+```{r}
+# melt correlation matrix
+melt_cor <- setDT(melt(cor_matrix)) 
+melt_cor[abs(value) < 1 & abs(value) > ]
+```
+
+### We explore multiple imputation methods (because taking a large chunk of our variables may lose us important clinical information)
+
+#### 1) Multiple imputation
+```{r, echo=FALSE}
+# only on numeric columns
+#cor(input_df[, .SD, .SDcols = which(sapply(input_df, is.numeric))])
+
+# one way: using package MICE, we can create a certain n of datasets and run a model on it which creates n different predictions, and then create a pooled estimate :D
+
+library(mice)
+library(lattice)
+
+# this would take a long time (~ 1 minute per variable, so ~15 hours per model, so maybe stick with 1 imputation or 
+# select best variables to impute)
+
+# select bmi, age, encounter_id, patient_id, gcs_eyes_apache, gcs_motor_apache, gcs_verbal_apache,
+# 
+imp1 <- mice(input_df, m = 5)
+
+
+```
+
+#### 2) Maximum Likelihood imputation
+```{r}
+
+```
+
+
+#### 3) E-M imputation
+```{r}
+
+```
+
+
+
+
+
+
+
