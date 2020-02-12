@@ -14,20 +14,19 @@ rm(list=ls())
 
 user <- Sys.info()[["user"]]
 
-## require folders
-
 ##################################
 # DEFINE LIBRARIES AND FUNCTIONS #
 ##################################
-pacman::p_load(data.table, assertthat, tidyr, 
-                mice, lattice, wNNsel, WaverR,
-                VIM, mix)
+pacman::p_load(data.table, assertthat, tidyr, mice, lattice, wNNsel, WaverR,
+                VIM, mix, glue)
+
 
 vet_data <- function(input_df, stage = "missing"){
     ## for missing values
     if(stage == "missing"){
-        barMiss(input_df)
-        barMiss(input_df, only.miss = FALSE)
+        aggr_plot <- aggr(data, col=c('navyblue','red'), numbers=TRUE, 
+                          sortVars=TRUE, labels=names(data), cex.axis=.7, 
+                          gap=3, ylab=c("Histogram of missing data","Pattern"))
     } else{
         ## for imputed values
         barMiss(input_df, delimiter = "_imp")
@@ -35,7 +34,33 @@ vet_data <- function(input_df, stage = "missing"){
     }
 }
 
-impute_method_selection <- function(method = "", input_df){
+
+check_threshold <- function(input_df, th_pct = 0.05){
+    # This method checks the percentage of missing
+    # and drops variables that are greater
+    #
+    # Parameters:
+    #   input_df: dataframe with missing values
+    #   th_pct: float, {0...1} percentage of missing val
+    #           in dataset that you would like
+    #
+    # Returns: data.table with not meeting threshold 
+    # variables removed
+    #
+    assert_that(th_pct <= 1 & th_pct >= 0, 
+                msg = "threshold precentage is not in the range of 0...1")
+    p_miss <- function(x){sum(is.na(x))/length(x)*100}
+    p_miss_mat <- apply(input_df, 2, p_miss)
+    setDT(p_miss_mat)
+    p_miss_mat$id_col = 1
+    p_miss_mat <- melt(mydata, id.vars = "id_col")
+    var_to_drop <- p_miss_mat[id_col > th_pct]$var %>% unique
+    missing_removed <- input_df[, !(var_to_drop), with = F]
+    return(missing_removed)
+}
+
+
+impute_method_selection <- function(method = "knn", input_df){
     # This method takes in a dataset with missing values and depending on
     # imputation method selected, returned imputed dataset
     #
@@ -45,6 +70,9 @@ impute_method_selection <- function(method = "", input_df){
     #
     # Returns: imputed dataset
     #
+    allowed_met <- c('knn', 'random_forest', 'mice','hot_deck', 'linear', 'em')
+    assert_that(method %in% allowed_met, 
+                msg = glue("You must pick a method from available methods: {allowed_met}"))
     if (method == "knn"){
         # weighted knn 
         input_mat <- as.matrix(input_df)
@@ -77,7 +105,23 @@ impute_method_selection <- function(method = "", input_df){
     } else if (method == "linear"){
         imputed_df <- waverr(RawData = input_mat, Nrepeats = 5)
     } else if (method == "em"){
-        imputed_df = em.mix(s, start, prior=1, maxits=1000, showits=TRUE, eps=0.0001)
+        imputed_df <- em.mix(s, start, prior=1, maxits=1000, showits=TRUE, eps=0.0001)
+    } else if (method == "mice"){
+        imputed_df <- mice(input_df, m = 5, method = "rf")
+        imputed_df <- complete(imputed_df)
     }
     return(imputed_df)
+}
+
+main <- function(){
+    input_df <- fread(paste0(getwd(), "/encoded_df.csv"))
+    thres_df <- check_threshold(input_df)
+    imputed_df <- impute_method_selection(thres_df)
+    fwrite(imputed_df, paste0(getwd(), "/imputed_df.csv"))
+}
+
+if(!interactive){
+ 
+} else{
+
 }
