@@ -15,6 +15,7 @@ import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as pyplot
+from sklearn import preprocessing
 import seaborn as sb
 
 
@@ -75,6 +76,24 @@ def variable_binning(input_df, bin_info):
         labels = list(range(1, len(bins)))
         input_df['{}_bin'.format(col)] = pd.cut(df[col], bins=bins, labels=labels)
     return(input_df)
+
+
+def variable_scaling(input_df, scale_vars, has_outlier):
+    ''' Scaling variables (mean of 0, sd of 1) for better handling by models
+
+        Paramaters:
+            input_df: our input df for variable scaling
+            scale_vars: dict of keys being bin cols and values being bin widths
+            has_outlier: [T,F] whether dataset contains outliers
+
+        Returns: df with selected variables scaled
+    '''
+    if has_outlier:
+        scaled_df = preprocessing.robust_scale(input_df[scale_vars])
+    else
+        scaled_df = preprocessing.scale(input_df[scale_vars])
+    return(scaled_df)
+
 
 def main():
     input_df = pd.read_csv(paste0(getwd(), "/training_v2.csv"))
