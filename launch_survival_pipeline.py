@@ -3,7 +3,7 @@
 Description: Used to transform icu health data
 Contents:
 How To Use:
-Contributors: Rixing Xu
+Contributors: rxu17
 '''
 
 import re
@@ -54,20 +54,24 @@ def get_path(main_process = None, step = None):
         raise LookupError("Could not find specified main process, "
                           "{}, in list of parameters".format(main_process))
     if step is None:
-        all_steps = 
+        pass
     if step not in list(parameter_dict[main_process].keys()):
         raise LookupError("Could not find specified step, "
                           "{}, in list of parameters".format(step))
     return(parameter_dict[main_process][step])
 
 
-def launch(process_ids):
+def launch(process_ids, remove_outliers, impute_missing):
     #cmd = ' '.join(["bash", shell_path, self.script])
     pp = get_pipeline_process()
     for process_id in process_ids:
+        if not(remove_outliers):
+            pass
+        if not(impute_missing):
+            pass
         script = get_path(pp[process_id].keys())
         cmd = ['python ' + script]
-    subprocess.call(cmd, shell = False)
+        subprocess.call(cmd, shell = False)
 
 
 def get_args():
@@ -78,10 +82,18 @@ def get_args():
                         default=[1, 2, 3, 4, 5],
                         nargs='*',
                         help=('List of main processes you wish to run')
+    parser.add_argument('-reout', '--remove_outliers', type=utils.str2bool,
+                        default=True,
+                        nargs='?'
+                        help=('Run outlier removal process')
+    parser.add_argument('-imp', '--impute_missing', type=utils.str2bool,
+                        default=True,
+                        nargs='?'
+                        help=('Run imputation process on missing data')
 
 def main():
     args = get_args()
-    launch(args.main_process_ids)
+    launch(args.main_process_ids, args.remove_outliers, args.impute_missing)
 
 
 if __name__ == "__main__":
