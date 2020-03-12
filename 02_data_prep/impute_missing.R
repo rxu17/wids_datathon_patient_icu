@@ -1,8 +1,9 @@
 ##################################################################################
 # Name of Script: impute_missing.R
-# Description:
-# Arguments: N/A
-# Output: 
+# Description: This script searches for missingness in a dataset and based on
+#               user selection, takes an imputation method and fills in the missingness
+# Arguments: output from transform_data.py
+# Output: imputed dataset
 # Contributors: rxu17
 ###################################################################################
 
@@ -11,7 +12,6 @@
 #############################
 # set working directories by operating system
 rm(list=ls())
-
 user <- Sys.info()[["user"]]
 
 ##################################
@@ -22,12 +22,21 @@ pacman::p_load(data.table, assertthat, tidyr, mice, lattice, wNNsel, WaverR,
 
 
 vet_data <- function(input_df, stage = "missing"){
-    ## for missing values
+    # This method generates plots for showing distribution of
+    # missing data within the dataset for each variable
+    #
+    # Parameters:
+    #   input_df: dataframe with missing values
+    #   stage: str, ['missing', 'filled'] - missing stage is when 
+    #                variables are not filled in, filled is when values
+    #                have been imputed 
+    #
     if(stage == "missing"){
         aggr_plot <- aggr(data, col=c('navyblue','red'), numbers=TRUE, 
                           sortVars=TRUE, labels=names(data), cex.axis=.7, 
                           gap=3, ylab=c("Histogram of missing data","Pattern"))
-    } else{
+    } 
+    if(stage == "filled"){
         ## for imputed values
         barMiss(input_df, delimiter = "_imp")
         barMiss(input_df, delimiter = "_imp", only.miss = FALSE)
@@ -35,26 +44,31 @@ vet_data <- function(input_df, stage = "missing"){
 }
 
 
-check_threshold <- function(input_df, th_pct = 0.05){
+check_threshold <- function(input_df, th_pct = 5){
     # This method checks the percentage of missing
-    # and drops variables that are greater
+    # and drops variables that are greater than that threshold
     #
     # Parameters:
     #   input_df: dataframe with missing values
-    #   th_pct: float, {0...1} percentage of missing val
-    #           in dataset that you would like
+    #   th_pct: int, {0...100} percentage of missing val
+    #           in dataset that you would like to be cutoff pt
     #
     # Returns: data.table with not meeting threshold 
     # variables removed
     #
     assert_that(th_pct <= 1 & th_pct >= 0, 
                 msg = "threshold precentage is not in the range of 0...1")
-    p_miss <- function(x){sum(is.na(x))/length(x)*100}
-    p_miss_mat <- apply(input_df, 2, p_miss)
+    p_miss <- function(x){  # helper function checks for pctage missing in a col
+                    (sum(is.na(x))/length(x))*100
+                    }
+    p_miss_mat <- apply(input_df, 2, p_miss) # applies check across all cols
+    p_miss_mat$id_col <- 1
     setDT(p_miss_mat)
-    p_miss_mat$id_col = 1
-    p_miss_mat <- melt(mydata, id.vars = "id_col")
-    var_to_drop <- p_miss_mat[id_col > th_pct]$var %>% unique
+    # reshapes data, from variables being wide to long
+    p_miss_mat <- melt(p_miss_mat, id.vars = "id_col")
+
+    # find vars that don't meet threshold and drop
+    var_to_drop <- p_miss_mat[value > th_pct]$var %>% unique
     missing_removed <- input_df[, !(var_to_drop), with = F]
     return(missing_removed)
 }
@@ -72,7 +86,7 @@ impute_method_selection <- function(method = "knn", input_df){
     #
     allowed_met <- c('knn', 'random_forest', 'mice','hot_deck', 'linear', 'em')
     assert_that(method %in% allowed_met, 
-                msg = glue("You must pick a method from available methods: {allowed_met}"))
+            msg = glue("You must pick a method from available methods: {allowed_met}"))
     if (method == "knn"){
         # weighted knn 
         input_mat <- as.matrix(input_df)
@@ -114,6 +128,7 @@ impute_method_selection <- function(method = "knn", input_df){
 }
 
 main <- function(){
+    # reads in data, imputes and saves
     input_df <- fread(paste0(getwd(), "/encoded_df.csv"))
     thres_df <- check_threshold(input_df)
     imputed_df <- impute_method_selection(thres_df)
@@ -121,7 +136,7 @@ main <- function(){
 }
 
 if(!interactive){
- 
+    main()
 } else{
-
+    main()
 }
