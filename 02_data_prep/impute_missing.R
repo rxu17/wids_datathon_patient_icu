@@ -88,7 +88,7 @@ impute_method_selection <- function(method = "knn", input_df){
     assert_that(method %in% allowed_met, 
             msg = glue("You must pick a method from available methods: {allowed_met}"))
     if (method == "knn"){
-        # weighted knn 
+        # weighted knn (K-nearest neigbors)
         input_mat <- as.matrix(input_df)
 
         # cross validate for best lambda
@@ -103,6 +103,7 @@ impute_method_selection <- function(method = "knn", input_df){
                                     method = "2", m = cv_best$m.opt, c = 0.3,
                                     verbose = TRUE, verbose2 = FALSE)
     } else if (method == "random_forest"){
+        # uses random forest method to predict missingness
         input_mat <- as.matrix(input_df)
         imputed_df <- missForest(input_mat, maxiter = 10, ntree = 100, variablewise = FALSE,
                     decreasing = FALSE, verbose = FALSE,
@@ -112,15 +113,21 @@ impute_method_selection <- function(method = "knn", input_df){
                     xtrue = NA, parallelize = c('no', 'variables', 'forests'))
 
     } else if (method == "hot_deck"){
+        # Method where missing value receives valid value from a case randomly 
+        # chosen from those cases which are maximally similar to the missing one, 
+        # based on some background variables specified by the user
         imputed_df <- hotdeck(data, variable = c(), ord_var = c(),
                              impNA = TRUE, imp_var = TRUE,
                             imp_suffix = "imp")
 
     } else if (method == "linear"){
+        # uses linear regression to predict missing
         imputed_df <- waverr(RawData = input_mat, Nrepeats = 5)
     } else if (method == "em"){
+        # uses Expectation Maximization method
         imputed_df <- em.mix(s, start, prior=1, maxits=1000, showits=TRUE, eps=0.0001)
     } else if (method == "mice"){
+        # uses Multivariate Imputation by Chained Equations method
         imputed_df <- mice(input_df, m = 5, method = "rf")
         imputed_df <- complete(imputed_df)
     }
