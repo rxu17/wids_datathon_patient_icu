@@ -16,7 +16,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as pyplot
 from sklearn import preprocessing
-import seaborn as sb
 
 
 def one_hot_encoding(input_df):
@@ -66,15 +65,16 @@ def variable_binning(input_df, bin_info):
     '''
     assert(isinstance(bin_info, 'dict') & set(bin_info.keys()) <= set(input_df.columns)), \
         "Error: bin_info is not a dictionary object and/or columns to bin doesn't exist in input_df"
-    for col in bin_info.keys():
-        assert(bin_info[col] < max(input_df[col]) - min(input_df[col])) \
+    for col in bin_info.keys(): # loop through all variables to bin
+        assert(bin_info[col] < max(input_df[col]) - min(input_df[col])), \
             "bin width of {wid} for column {col} is too big".format(wid = bin_info[col], col = col)
-        if col == "age":
+        if col == "age": # age has standardized bins
             bins = np.arange(1, 100, bin_info[col]) 
         else:
-            bins = np.arange(math.floor(min(input_df[col])), math.floor(max(input_df[col])), bin_widths[col]) 
+            bins = np.arange(math.floor(min(input_df[col])), math.floor(max(input_df[col])), 
+                                                                            bin_info[col]) 
         labels = list(range(1, len(bins)))
-        input_df['{}_bin'.format(col)] = pd.cut(df[col], bins=bins, labels=labels)
+        input_df['{}_bin'.format(col)] = pd.cut(input_df[col], bins=bins, labels=labels)
     return(input_df)
 
 
@@ -90,15 +90,16 @@ def variable_scaling(input_df, scale_vars, has_outlier):
     '''
     if has_outlier:
         scaled_df = preprocessing.robust_scale(input_df[scale_vars])
-    else
+    else:
         scaled_df = preprocessing.scale(input_df[scale_vars])
     return(scaled_df)
 
 
 def main():
-    input_df = pd.read_csv(paste0(getwd(), "/training_v2.csv"))
+    # reads in dataset, encodes, optional: binning and scaling and saves
+    input_df = pd.read_csv("{}/training_v2.csv".format(os.getcwd()))
     encoded_df = one_hot_encoding(input_df)
-    encoded_df.to_csv(paste0(getwd(), "/encoded_df.csv"))
+    encoded_df.to_csv("{}/encoded_df.csv".format(os.getcwd()))
 
 if __name__ == "__main__":
     main()
