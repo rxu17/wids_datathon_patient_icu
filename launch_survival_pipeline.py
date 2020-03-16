@@ -2,7 +2,8 @@
 '''
 Description: Used to transform icu health data
 Contents:
-How To Use:
+Arguments:
+How To Use: python launch_survival_pipeline.py 
 Contributors: rxu17
 '''
 
@@ -27,7 +28,8 @@ def get_pipeline_process():
 
 
 def get_current_repo():
-    ''' Returns the repo location for the code that is currently running.
+    ''' 
+    Returns the repo location for the code that is currently running.
     '''
     import __main__
     try:
@@ -44,8 +46,13 @@ def get_current_repo():
 
 
 def get_path(main_process = None, step = None):
-    ''' retruns the gbd_parameter entry for the parameter_name.
-        returns a dict of parameters if parameter_name = 'list'
+    ''' Gets the full filepath for a given process name and step
+        
+        Args: 
+            main_process - str, see survival_paths.yaml for possible 
+                    values, process names
+            step - str, see survival_paths.yaml for possible 
+                    values, step names
     '''
     path_file = get_current_repo() + "/survival_paths.yaml"
     with open(path_file) as data_file:
@@ -62,6 +69,9 @@ def get_path(main_process = None, step = None):
 
 
 def launch(process_ids, remove_outliers, impute_missing):
+    '''
+
+    '''
     #cmd = ' '.join(["bash", shell_path, self.script])
     pp = get_pipeline_process()
     for process_id in process_ids:
@@ -81,15 +91,15 @@ def get_args():
     parser.add_argument('-mp', '--main_process_ids', type=int,
                         default=[1, 2, 3, 4, 5],
                         nargs='*',
-                        help=('List of main processes you wish to run')
+                        help=('List of main processes you wish to run'))
     parser.add_argument('-reout', '--remove_outliers', type=utils.str2bool,
                         default=True,
-                        nargs='?'
-                        help=('Run outlier removal process')
+                        nargs='?',
+                        help=('Run outlier removal process'))
     parser.add_argument('-imp', '--impute_missing', type=utils.str2bool,
                         default=True,
-                        nargs='?'
-                        help=('Run imputation process on missing data')
+                        nargs='?',
+                        help=('Run imputation process on missing data'))
 
 def main():
     args = get_args()
