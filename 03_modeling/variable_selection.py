@@ -17,7 +17,6 @@ import matplotlib.pyplot as pyplot
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.decomposition import PCA
-import seaborn as sb
 
 
 def univariate_selection(input_df, x_cols, y_col, num_features):
@@ -56,11 +55,25 @@ def univariate_selection(input_df, x_cols, y_col, num_features):
 
 
 def pca(input_df, x_cols, y_col, num_features):
+    ''' NOTE: PCA methods need scaling done beforehand
+        This method analyzes the PCA (Principal Component Analysis) of each
+        feature in a model and decides which ones are the most import.
+
+        Parameters:
+            input_df: dataframe input
+            x_cols: list, names of predictor vars
+            y_col: str, name of dependent var
+            num_features: int, [1, number of predictors], the number of features
+            you want bested for your model
+        
+        Returns: pca object with ideal number of components to keep
+    '''
     X = input_df[x_cols]
     pca = PCA(n_components = num_features)
     pca.fit(X)
     print(pca.explained_variance_ratio_)
     print(pca.singular_values_)
+    return(pca)
 
 def step_forward_selection():
     pass
@@ -71,13 +84,27 @@ def rfe():
 def feature_importance():
     pass
 
-def corr_importance():
-    pass
+def corr_importance(input_df, x_cols, y_col, threshold):
+    ''' This method gets the correlation of predictor vars with
+        target vars and decides which one matches threshold level
+
+        Parameters:
+            input_df: dataframe input
+            x_cols: list, names of predictor vars
+            y_col: str, name of dependent var
+            threshold: float, [0...1] level at which correlation
+                        with target var should be above
+        
+        Returns: df with cols that match threshold level
+    '''
+    corr_df = input_df[input_df.columns[1:]].corr()[y_col][:]
+    corr_df = corr_df[corr_df['corr'] >= threshold]
+    return(corr_df)
 
 
 def main():
-    input_df = pd.read_csv(paste0(getwd(), "/training_v2.csv"))
-    feature_df.to_csv(paste0(getwd(), "/feature_selected_df.csv"))
+    input_df = pd.read_csv("{}/training_v2.csv".format(os.getcwd()))
+    feature_df.to_csv("{}/feature_select_df.csv".format(os.getcwd()))
 
 
 if __name__ == "__main__":
