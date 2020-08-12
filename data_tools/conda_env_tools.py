@@ -71,6 +71,8 @@ def create_env_file():
 
 
 def update_env_file(option):
+    '''
+    '''
     with open(get_current_env_path(), 'w') as file:
         documents = yaml.full_load(file)
         if option == "1":
@@ -95,75 +97,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-'''
-function cenv() {
-    # Usage and help message
-    read -r -d '' CENV_HELP <<-'EOF'
-    Usage: cenv [COMMAND] [FILE]
-
-    Detect, activate, delete, and update conda environments.
-    FILE should be a conda .yml environment file.
-    If FILE is not given, assumes it is environment.yml.
-    Automatically finds the environment name from FILE.
-
-    Commands:
-
-    None     Activates the environment
-    rm       Delete the environment
-    up       Update the environment
-
-    EOF
-
-    envfile="environment.yml"
-
-    # Parse the command line arguments
-    if [[ $# -gt 2 ]]; then
-        errcho "Invalid argument(s): $@";
-        return 1;
-    elif [[ $# == 0 ]]; then
-        cmd="activate"
-    elif [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
-        echo "$CENV_HELP";
-        return 0;
-    elif [[ "$1" == "rm" ]]; then
-        cmd="delete"
-        if [[ $# == 2 ]]; then
-            envfile="$2"
-        fi
-    elif [[ "$1" == "up" ]]; then
-        cmd="update"
-        if [[ $# == 2 ]]; then
-            envfile="$2"
-        fi
-    elif [[ $# == 1 ]]; then
-        envfile="$1"
-        cmd="activate"
-    else
-        errcho "Invalid argument(s): $@";
-        return 1;
-    fi
-
-    # Check if the file exists
-    if [[ ! -e "$envfile" ]]; then
-        errcho "Environment file not found:" $envfile;
-        return 1;
-    fi
-
-    # Get the environment name from the yaml file
-    envname=$(grep "name: *" $envfile | sed -n -e 's/name: //p')
-
-    # Execute one of these actions: activate, update, delete
-    if [[ $cmd == "activate" ]]; then
-        source activate "$envname";
-    elif [[ $cmd == "update" ]]; then
-        errcho "Updating environment:" $envname;
-        source activate "$envname";
-        conda env update -f "$envfile"
-    elif [[ $cmd == "delete" ]]; then
-        errcho "Removing environment:" $envname;
-        source deactivate;
-        conda env remove --name "$envname";
-    fi
-}
-'''
