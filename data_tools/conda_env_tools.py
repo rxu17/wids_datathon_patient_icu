@@ -20,22 +20,60 @@ else:
 
 
 def get_current_env_path():
-    ''' Returns path to current environment
+    ''' Returns str, path to current environment
     '''
     cur_env = os.environ['CONDA_PREFIX']
     return('/{}/environment.yml'.format(cur_env))
 
 
-def package_options():
-    ''' Returns user input options for conda environment changes
+def get_env_path(env_name):
+    ''' Returns str, path to selected env
     '''
-    options = {"1":"Add package",
-               "2":"Remove package",
-               "3":"Remove all",
-               "4":"Copy over yml",
-               "5":"Update environment"
-               "6":"Create environment"}
+    cur_env = os.environ['CONDA_PREFIX']
+    env_path = os.path.dirname(get_current_env_path())
+    envs = os.listdir("{}/envs/{}/".format(env_path, env_name))
+    return(envs)
+
+
+def package_options():
+    ''' Returns dict, user input options for conda environment changes
+    '''
+    options = {"1":"Create environment",
+               "2":"Add package",
+               "3":"Remove package",
+               "4":"Remove all",
+               "5":"List environments",
+               "6":"List packages",
+               "7":"Activate environment"}
     return(options)
+
+
+def get_envs():
+    ''' Returns str, current conda environment path
+    '''
+    env_path = os.path.dirname(get_current_env_path())
+    envs = os.listdir("{}/envs/".format(env_path))
+    envs = {str(i):envs[i] for i in range(0, len(envs))}
+    return(envs)
+
+
+def validate_user_input(options, message):
+    ''' Validation function for asking for user input
+
+        Args: options - str, available options for user
+              message - str, prompt for user
+
+        Returns: str, user selected option
+    '''
+    user_input = ""
+    while user_input not in options.keys():
+        for key in options:
+            print(key, ':', options[key])
+        print("Enter 'q' anytime to quit\n")
+        user_input = input(message)
+        if user_input.lower() == "q": # exit
+            sys.exit()
+    return(user_input)
 
 
 def options_select():
@@ -43,90 +81,100 @@ def options_select():
         actionable function
     '''
     op = package_options()
-    for key in op:
-        print(key, ': ', op[key])
-
-    user_input = ""
-    # continues user input until option is selected
-    while user_input not in op.keys():
-        if user_input.lower() == "q": # exit
-            sys.exit()
-        user_input = input("Please select an option from the above: \n")
-
+    user_input = validate_user_input(options = op, 
+                                     message = "Please select an option from the above: \n")
     # option paths
-    if user_input in ["1", "2"]:
-        update_env_file(user_input)
-    elif user_input == "3":
-        os.remove(get_current_env_path())
-    elif user_input == "4":
-        create_env_file()
-    elif user_input in ["5", "6"]:
-        if user_input == "6":
-            env_name = input("Please enter a name for your new env: \n")
-        create_env_from_file(user_input, get_current_env_path(), env_name)
+    if user_input == "1":
+        create_env()
+    elif user_input == "5":
+        os.system("conda env list")
+    else:
+        env_name = get_envs()[validate_user_input(options = get_envs(), 
+                                       message = "Please select an environment to change: \n")]
+        if user_input in ["2", "3"]:
+            update_env_file(user_input, env_name)
+        elif user_input == "4":
+            remove_env(env_name)
+        elif user_input == "6":
+            os.system("conda list -n {}".format(env_name))
+        elif user_input == "7":
+            os.system("source activate {}".format(env_name))
 
 
-def create_env_file():
-    ''' Function that creates environment file from 
-        another environment file
+def create_env():
+    ''' Function that has the option of creating environment file from 
+        another environment file, or creating blank env
     '''
-    # current environment path
-    user_input = input("Please select from following environments to copy yml from:{}".format())
-    save_path = "{}/to_copy.yml".format(os.getcwd())
-    os.system("conda env export > {}".format(save_path))
+    env_name = input("Please enter a name for your new env: \n")
+    option = validate_user_input(options = {"a":"Create env from another env",
+                                            "b":"Create blank env"}, 
+                                 message = "Please select an option from the above: \n")
 
-    # open env file to copy
-    with open(save_path, 'w') as file:
-        to_copy = yaml.full_load(file)
+    # create from another env yaml file
+    if option == "a":
+        user_input = get_envs()[validate_user_input(options = get_envs(), 
+                    message = "Please select an environment to copy: \n")]
+        save_path = "{}/to_copy.yaml".format(os.getcwd())
+        os.system("conda env export > {} -n {}".format(save_path, env_name))
 
-    # save to current env file
-    with open(get_current_env_path(), 'w') as file:
-        documents = yaml.dump(to_copy, file)
-        print(documents)
-
-
-def update_env_file(option):
-    ''' Function for manually adding or removing packages from 
-        environment file
-
-        Args: option - str, option selected from package_options()
-    '''
-    with open(get_current_env_path(), 'w') as file:
-        documents = yaml.full_load(file)
-        if option == "1": # add pkg
-            pkg_name = input("Please enter package_name to add")
-            pkg_ver = input("Please enter package_version to add")
-            pkg_name = "{}={}".format(pkg_name, pkg_ver)
-            documents['dependencies'].append(pkg_name)
-        elif option == "2": # remove pkg
-            pkg_name = input("Please enter package_name to remove")
-            pkg_to_remove = [pkg for pkg in documents['dependencies'] if pkg_name in pkg][0]
-            documents['dependencies'].remove(pkg_to_remove)
-        yaml.dump(documents, file)
-
-
-def create_env_from_file(option, file, env_name):
-    ''' Functions takes in filepath for environmental
-        yaml file and creates/updates conda env using it
-
-        Args: option - str, option selected from package_options()
-              file - str, filepath of current env yaml file
-              env_name - str, name for envrionment
-    '''
-    if option == "5":
-        os.system("conda env update --prefix ./env --file {}  --prune".format(file))
-    elif option == "6":
         try:
-            os.system("conda env create -f {}".format(file))
+            # open env file to copy
+            with open(save_path, 'r+') as file:
+                to_copy = yaml.full_load(file)
+                # save to selected env file
+                os.system("conda env create -f {}".format(save_path))
         except:
             print("Error with env creation from file")
         finally:
             # create default environment
-            os.system("conda env create -n {}".format(env_name))
+            os.system("conda create -n {} python".format(env_name))
+
+    elif option == "b":
+        # create blank environment
+        os.system("conda create -n {}".format(env_name))
+
+
+def update_env_file(option, env_name):
+    ''' Function for manually adding or removing packages from 
+        environment file
+
+        Args: option - str, option selected from package_options()
+              env_name - str, env to update
+    '''
+    if option == "2": # add pkg
+        pkg_name = input("Please enter package_name to add: \n")
+        pkg_ver = input("Please enter package_version to add: \n") # optional
+        if pkg_ver == "":
+            pkg_name = "{}".format(pkg_name)
+        else:
+            pkg_name = "{}={}".format(pkg_name, pkg_ver)
+        os.system("conda install {} -n {}".format(pkg_name, env_name))
+    elif option == "3": # remove pkg
+        pkg_name = input("Please enter package_name to remove: \n")
+        os.system("conda remove {} -n {}".format(pkg_name, env_name))
+
+
+def remove_env(env_name):
+    ''' Functions takes in env name and removes it
+
+        Args: env_name - str, name for envrionment
+    '''
+    try:
+        os.system("conda remove --name {} --all".format(env_name))
+    except:
+        print("Trouble removing environment")
+    finally:
+        os.system("conda env remove -n {}".format(env_name))
 
 
 def main():
-    options_select()
+    ''' Main function allows user to continue making 
+        conda env choices
+    '''
+    cont = ""
+    while cont != "n":
+        cont = input("Continue? (y/n) \n")
+        options_select()
 
 if __name__ == "__main__":
     main()
