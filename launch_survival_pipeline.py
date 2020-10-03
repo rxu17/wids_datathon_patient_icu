@@ -19,7 +19,7 @@ import yaml
 from getpass import getuser
 
 
-def get_pipeline_process():
+def get_pipeline_process() -> dict:
     steps = {1: "data_intake",
              2: "data_prep",
              3: "modeling",
@@ -27,13 +27,12 @@ def get_pipeline_process():
              5: "model_deployment"}
 
 
-def get_current_repo():
+def get_current_repo() -> str:
     ''' 
     Returns the repo location for the code that is currently running.
     '''
-    import __main__
     try:
-        this_dir = os.path.realpath(__main__.__file__).strip(".py")
+        this_dir = os.path.realpath(__file__).strip(".py")
     except Exception:
         this_dir = os.getcwd()
         assert '/wids_datathon_patient_survival' in this_dir, \
@@ -45,7 +44,7 @@ def get_current_repo():
     return(code_repo)
 
 
-def get_path(main_process = None, step = None):
+def get_path(main_process = None, step = None) -> str:
     ''' Gets the full filepath for a given process name and step
         
         Args: 
@@ -68,7 +67,7 @@ def get_path(main_process = None, step = None):
     return(parameter_dict[main_process][step])
 
 
-def launch(process_ids, remove_outliers, impute_missing):
+def launch(process_ids : list, remove_outliers : bool, impute_missing : bool):
     '''
 
     '''
@@ -100,6 +99,7 @@ def get_args():
                         default=True,
                         nargs='?',
                         help=('Run imputation process on missing data'))
+    return(parser)
 
 def main():
     args = get_args()

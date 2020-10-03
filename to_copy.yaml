@@ -1,0 +1,4 @@
+name: testing
+channels:
+  - defaults
+prefix: /Users/rexxx/anaconda3/envs/testing

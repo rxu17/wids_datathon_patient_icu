@@ -19,14 +19,14 @@ else:
     import yaml
 
 
-def get_current_env_path():
+def get_current_env_path() -> str:
     ''' Returns str, path to current environment
     '''
     cur_env = os.environ['CONDA_PREFIX']
     return('/{}/environment.yml'.format(cur_env))
 
 
-def get_env_path(env_name):
+def get_env_path(env_name : str) -> str:
     ''' Returns str, path to selected env
     '''
     cur_env = os.environ['CONDA_PREFIX']
@@ -35,7 +35,7 @@ def get_env_path(env_name):
     return(envs)
 
 
-def package_options():
+def package_options() -> dict:
     ''' Returns dict, user input options for conda environment changes
     '''
     options = {"1":"Create environment",
@@ -48,7 +48,7 @@ def package_options():
     return(options)
 
 
-def get_envs():
+def get_envs() -> dict:
     ''' Returns str, current conda environment path
     '''
     env_path = os.path.dirname(get_current_env_path())
@@ -57,10 +57,10 @@ def get_envs():
     return(envs)
 
 
-def validate_user_input(options, message):
+def validate_user_input(options : dict, message : str):
     ''' Validation function for asking for user input
 
-        Args: options - str, available options for user
+        Args: options - dict, available options for user
               message - str, prompt for user
 
         Returns: str, user selected option
@@ -134,7 +134,7 @@ def create_env():
         os.system("conda create -n {}".format(env_name))
 
 
-def update_env_file(option, env_name):
+def update_env_file(option : str, env_name : str):
     ''' Function for manually adding or removing packages from 
         environment file
 
@@ -154,7 +154,7 @@ def update_env_file(option, env_name):
         os.system("conda remove {} -n {}".format(pkg_name, env_name))
 
 
-def remove_env(env_name):
+def remove_env(env_name : str):
     ''' Functions takes in env name and removes it
 
         Args: env_name - str, name for envrionment
@@ -175,6 +175,7 @@ def main():
     while cont != "n":
         cont = input("Continue? (y/n) \n")
         options_select()
+
 
 if __name__ == "__main__":
     main()

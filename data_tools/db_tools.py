@@ -8,7 +8,7 @@ Contributors: rxu17
 
 import sqlite3
 import getpass
-import datetime
+from datetime import datetime
 from contextlib import closing
 from sqlalchemy import create_engine
 
@@ -45,7 +45,7 @@ def run_query(connection, query):
             if "SELECT" in query:
                 rows = cursor.execute(query).fetchall()
                 return(rows)
-            else q_type == "result":
+            elif q_type == "result":
                 cursor.execute(query)
                 return()
 
@@ -65,27 +65,35 @@ def get_table(connection, table):
         with closing(connection.cursor()) as cursor:
             query = "SELECT * FROM {};".format(table)
             table = cursor.execute(query).fetchall()
+            print("Table fetched!")
             return(table)
 
 
-def upload_data(filepath, table, action):
+def delete_table(connection, table):
+    '''
+    '''
+    with closing(connection) as connection:
+        with closing(connection.cursor()) as cursor:
+            query = "DROP TABLE {};".format(table)
+            cursor.execute(query)
+            print("Table deleted!")
+
+
+def upload_data(connection, df, table, action):
     ''' Uploads data frame to database table
 
         Args: 
-            filepath - str,
-                        filepath to data to be uploaded
+            df - DataFrame,
+                        dataframe object to be uploaded
             table - str,
                         name of table to upload to
             action - str, ['update', 'replace']
                         add to table or replace
     '''
-    with closing(connection) as conn:
-        df = pandas.read_csv(filepath)
-
-        # add get_default_settings
-        settings = get_default_settings()
-        df = df.assign(**settings)
-        if action == "update":
-            df.to_sql(table, conn, if_exists='append', index=False)    
-        elif action == "replace":
-            df.to_sql(table, conn, if_exists='replace', index=False)
+    # add get_default_settings
+    settings = get_default_settings()
+    df.assign(**settings)
+    if action == "update":
+        df.to_sql(table, connection, if_exists='append', index=False)    
+    elif action == "replace":
+        df.to_sql(table, connection, if_exists='replace', index=False)
