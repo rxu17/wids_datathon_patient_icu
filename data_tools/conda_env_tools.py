@@ -26,15 +26,6 @@ def get_current_env_path() -> str:
     return('/{}/environment.yml'.format(cur_env))
 
 
-def get_env_path(env_name : str) -> str:
-    ''' Returns str, path to selected env
-    '''
-    cur_env = os.environ['CONDA_PREFIX']
-    env_path = os.path.dirname(get_current_env_path())
-    envs = os.listdir("{}/envs/{}/".format(env_path, env_name))
-    return(envs)
-
-
 def package_options() -> dict:
     ''' Returns dict, user input options for conda environment changes
     '''

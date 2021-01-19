@@ -16,13 +16,13 @@ class TestUtils(unittest.TestCase):
         df = di.clean_data(self.filepath)
         for subset in df:
             self.assertTrue(len(subset) > 0, "Dataset has no rows!")
-        #self.assertTrue()
+            self.assertFalse(all(subset), "Dataset has no rows!")
 
 
     def tearDown(self):
         '''
         '''
-        pass
+        
 
 if __name__ == "__main__":
     unittest.main()

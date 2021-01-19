@@ -75,6 +75,7 @@ class TestUserInputFunctions(unittest.TestCase):
                           SystemExit, 
                           "validate user input didn't exit when user entered 'q'")
 
+
     @patch('builtins.input', return_value='1')
     def test_validate_user_input_continue(self, mock_input):
         ''' Testing that a valid user input entered will throw no error

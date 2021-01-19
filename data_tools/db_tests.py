@@ -1,8 +1,22 @@
-from mock_db import MockDB
-from mock import patch
+import unittest
 import utils
 
-class TestUtils(MockDB):
+class TestUtils(unittest.TestCase):
+
+    def setUp(self):
+        '''
+        '''
+
 
     def test_db_write(self):
+        '''
+        '''
         pass
+
+    def tearDown(self):
+        '''
+        '''
+        pass
+
+if __name__ == "__main__":
+    unittest.main()

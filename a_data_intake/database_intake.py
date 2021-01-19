@@ -11,17 +11,21 @@ import re
 import time
 import os
 import sys
+import logging
 import pandas as pd
 import numpy as np
 from wids_datathon_patient_survival.data_tools import db_tools as dbt
+
 
 def clean_data(filepath : str) -> pd.DataFrame:
     df = pd.read_csv(filepath, chunksize = 1000)
     import pdb; pdb.set_trace()
     return(df)
 
+
 def validate_fields(df):
     return(df)
+
 
 def upload_to_db(conn : str, filepath : str):
     for subset in clean_data(filepath):
